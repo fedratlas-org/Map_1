@@ -204,3 +204,6 @@ body{margin:0;}
         opacity: 1;
     }
 }
+#uploadSection input {
+    margin-top: 10px;
+}

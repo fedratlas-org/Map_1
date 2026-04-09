@@ -3,6 +3,7 @@
 <head>
 
     <title>Map</title>
+    <meta charset="UTF-8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
     <link rel="stylesheet" href="CSS/style.css">
@@ -26,7 +27,9 @@
         <h2 id="placeTitle">Place Name</h2>
         <p id="placeDesc">Description will appear here...</p>
         <a id="seeMoreLink" target="_blank">See more...</a>
-
+        <div id="uploadSection" style="display:none; margin-top:10px;">
+            <input type="file" id="imageUpload" accept="image/*">
+        </div>
         <div class="card-actions">
             <button><i class="fa-solid fa-diamond-turn-right"></i> Directions</button>
             <button><i class="fa-regular fa-floppy-disk"></i> Save</button>
@@ -43,6 +46,7 @@
 
 </div>
 <div id="map"></div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="script.js"></script>
 
