@@ -1,6 +1,6 @@
 // 🗺 CREATE MAP (ONLY ONCE)
 var map = L.map('map').setView([7.8731, 80.7718], 10);
-
+map.doubleClickZoom.disable();
 // 🌍 TILE LAYER
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
@@ -62,43 +62,88 @@ function showPlaceCard(place) {
 
     document.getElementById("placeTitle").innerText = name;
     document.getElementById("placeAddress").innerText = place.display_name;
+
+    // 🧠 DEFAULT
+    let label = "Place";
+
+    // 🔥 Use place.type (from search API)
+    const type = place.type || "";
+
+    if (type.includes("country")) {
+        label = "Country";
+    } else if (type.includes("city") || type.includes("town")) {
+        label = "City";
+    } else if (type.includes("village")) {
+        label = "Village";
+    } else if (type.includes("road")) {
+        label = "Street";
+    } else if (type.includes("university")) {
+        label = "University";
+    } else if (type.includes("hotel")) {
+        label = "Hotel";
+    }
+
+    // ✅ SET TYPE
+    document.getElementById("placeType").innerText = label;
+
+    // 📖 Default description first
     document.getElementById("placeDesc").innerText =
         "Selected from map search. Explore or save this place.";
 
-    // 🖼 GET IMAGE (Wikipedia + fallback)
+    // 🖼 + 📖 REAL DATA
     fetchPlaceData(name);
 }
-
 function fetchPlaceData(name) {
+
+    // 🔥 RESET image first (prevents old image bug)
+    document.getElementById("placeImage").src = "";
+
     fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`)
         .then(res => res.json())
         .then(data => {
 
+            const img = document.getElementById("placeImage");
+            const uploadSection = document.getElementById("uploadSection");
+
             // 🖼 IMAGE
             if (data.thumbnail && data.thumbnail.source) {
-                document.getElementById("placeImage").src =
-                    data.thumbnail.source;
+                img.src = data.thumbnail.source;
+
+                // ❌ hide upload if image exists
+                uploadSection.style.display = "none";
+
             } else {
-                fallbackImage(name);
+                showUploadOption();
             }
 
             // 📖 DESCRIPTION
-            const descElement= document.getElementById("placeDesc");
+            const descElement = document.getElementById("placeDesc");
+
             if (data.extract) {
                 descElement.innerText = data.extract;
-                document.getElementById("seeMoreLink").href = data.content_urls.desktop.page;
+
+                document.getElementById("seeMoreLink").href =
+                    data.content_urls.desktop.page;
             } else {
-                document.getElementById("placeDesc").innerText =
-                    "No description available.";
+                descElement.innerText = "No description available.";
             }
         })
         .catch(() => {
-            fallbackImage(name);
+            showUploadOption();
+
             document.getElementById("placeDesc").innerText =
                 "No description available.";
         });
 }
+function showUploadOption() {
+    const img = document.getElementById("placeImage");
 
+    // placeholder image
+    img.src = "https://via.placeholder.com/400x200?text=No+Image";
+
+    // show upload UI
+    document.getElementById("uploadSection").style.display = "block";
+}
 // ❌ CLOSE CARD
 function closeCard() {
     document.getElementById("placeCard").classList.add("hidden");
@@ -108,5 +153,41 @@ function closeCard() {
 document.getElementById("searchbox").addEventListener("keypress", function(e) {
     if (e.key === "Enter") {
         searchLocation();
+    }
+});
+map.on('dblclick', function(e) {
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        .then(res => res.json())
+        .then(data => {
+
+            const place = {
+                lat: lat,
+                lon: lon,
+                display_name: data.display_name || "Selected Location"
+            };
+
+            if (marker) {
+                map.removeLayer(marker);
+            }
+
+            marker = L.marker([lat, lon]).addTo(map);
+
+            showPlaceCard(place);
+        });
+});
+document.getElementById("imageUpload").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            document.getElementById("placeImage").src = event.target.result;
+        };
+
+        reader.readAsDataURL(file);
     }
 });
