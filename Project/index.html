@@ -45,6 +45,35 @@
     </div>
 
 </div>
+<div id="addPlace" class="add hidden ">
+    <div class="add-content">
+        <p>Add a new location to the map</p>
+
+    <div class="add-upload" onclick="triggerUpload()">
+        <i class="fa-solid fa-camera"></i>
+        <p>Upload Place Photo</p>
+        <small>PNG, JPG up to 10MB</small>
+        <input type="file" id="placeImageInput" hidden>
+    </div>
+    <form  method="get">
+        <label for="placeName">Place Name:<sup>*</sup></label><br>
+        <input type="text" id="placeName"  placeholder="Place Name"><br>
+        <label for="placeDescInput">Description:<sup>*</sup></label><br>
+        <textarea id="placeDescInput" placeholder="Description"></textarea><br>
+        <label for="placeAddressInput">Address:<sup>*</sup></label><br>
+        <input type="text" id="placeAddressInput" placeholder="Address">
+    </form>
+    <div class="map-select-box">
+        <p>&#128205;location selected on map</p>
+
+        <div class="modal-action">
+            <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+            <button class="save-btn" onclick="savePlace()">Save</button>
+        </div>
+    </div>
+</div>
+
+</div>
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>

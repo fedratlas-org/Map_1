@@ -53,7 +53,12 @@ function searchLocation() {
             showPlaceCard(place);
         });
 }
+let selecting = false;
 
+function enableMapSelection() {
+    selecting = true;
+    alert("Click on map to select location 📍");
+}
 // SHOW PLACE CARD
 function showPlaceCard(place) {
     document.getElementById("placeCard").classList.remove("hidden");
@@ -178,6 +183,30 @@ map.on('dblclick', function(e) {
             showPlaceCard(place);
         });
 });
+map.on('click', function(e) {
+
+    if (!selecting) return;
+
+    selecting = false;
+
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
+
+    if (marker) {
+        map.removeLayer(marker);
+    }
+
+    marker = L.marker([lat, lon]).addTo(map);
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        .then(res => res.json())
+        .then(data => {
+
+            const address = data.display_name || "Selected location";
+
+            openAddPlaceForm(lat, lon, address);
+        });
+});
 document.getElementById("imageUpload").addEventListener("change", function(e) {
     const file = e.target.files[0];
 
@@ -191,3 +220,56 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
         reader.readAsDataURL(file);
     }
 });
+function openAddPlaceForm(lat, lon, address) {
+    document.getElementById("addPlace").classList.remove("hidden");
+    document.getElementById("placeAddressInput").value = address;
+    window.selectedLat = lat;
+    window.selectedLon = lon;
+}
+
+// ❌ CLOSE MODAL
+function closeModal() {
+    document.getElementById("addPlace").classList.add("hidden");
+}
+
+// 📸 TRIGGER UPLOAD (MODAL)
+function triggerUpload() {
+    document.getElementById("placeImageInput").click();
+}
+
+// 🖼 PREVIEW IMAGE (MODAL)
+document.getElementById("placeImageInput").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            document.querySelector(".upload-box").innerHTML =
+                `<img src="${event.target.result}" style="width:100%; border-radius:10px;">`;
+        };
+
+        reader.readAsDataURL(file);
+    }
+});
+
+// 💾 SAVE PLACE
+function savePlace() {
+    const name = document.getElementById("placeName").value;
+    const desc = document.getElementById("placeDescInput").value;
+    const address = document.getElementById("placeAddressInput").value;
+
+    const place = {
+        name,
+        desc,
+        address,
+        lat: window.selectedLat,
+        lon: window.selectedLon
+    };
+
+    console.log("Saved:", place);
+
+    alert("Place saved 😎");
+
+    closeModal();
+}
