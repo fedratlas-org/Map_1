@@ -85,7 +85,7 @@ sup{color: red;}
 
 .card-header img {
     width: 100%;
-    height: 180px;
+    height: auto;
     object-fit: cover;
 }
 
@@ -139,6 +139,7 @@ sup{color: red;}
     display: flex;
     justify-content: space-between;
     margin: 15px 0;
+    gap:5px;
 }
 
 .card-actions i {
@@ -299,4 +300,55 @@ sup{color: red;}
 .cancel-btn:hover {
     background: #0056B3;
     color: white;
+}
+
+
+@media (max-width: 768px) {
+    .map-nav {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .map-nav input,
+    .map-nav button {
+        width: 100%;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .place-card {
+        width: 95%;
+        left: 50%;
+        transform: translateX(-50%);
+        top: auto;
+        bottom: 10px;   /* 🔥 move to bottom */
+        border-radius: 16px;
+    }
+}
+
+
+
+@media (max-width: 768px) {
+    .add-content {
+        width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;  /* 🔥 scroll inside */
+    }
+}
+
+
+@media (max-width: 768px) {
+    .card-actions {
+        flex-direction: column;
+    }
+
+    .card-actions button {
+        width: 100%;
+    }
+}
+@media (max-width: 768px) {
+    .place-card {
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+    }
 }
