@@ -29,7 +29,7 @@ function searchLocation() {
     if (!query) return;
 
     // Search saved places first
-    fetch("http://localhost:3000/places")
+    fetch("https://fedratlas-map.onrender.com/places")
         .then(res => res.json())
         .then(places => {
             const found = places.find(place =>
