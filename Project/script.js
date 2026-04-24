@@ -279,7 +279,7 @@ function savePlace() {
         image: uploadedImage
     };
 
-    fetch("http://localhost:3000/places", {
+    fetch("https://fedratlas-map.onrender.com/places", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -306,7 +306,7 @@ function loadPlaces() {
     savedMarkers.forEach(m => map.removeLayer(m));
     savedMarkers = [];
 
-    fetch("http://localhost:3000/places")
+    fetch("https://fedratlas-map.onrender.com/places")
         .then(res => res.json())
         .then(data => {
 
