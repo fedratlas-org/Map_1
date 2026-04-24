@@ -1,189 +1,152 @@
-// 🗺 CREATE MAP (ONLY ONCE)
-var map = L.map('map').setView([7.8731, 80.7718], 10);
+// ===============================
+// GLOBALS
+// ===============================
+let uploadedImage = "";
+let marker = null;
+let selecting = false;
+let savedMarkers = [];
+
+// ===============================
+// MAP INIT
+// ===============================
+const map = L.map("map").setView([7.8731, 80.7718], 10);
 map.doubleClickZoom.disable();
-// 🌍 TILE LAYER
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap"
 }).addTo(map);
 
-let marker;
-
-// 🔍 SEARCH FUNCTION
+// ===============================
+// SEARCH
+// ===============================
 function searchLocation() {
-    const query = document.getElementById("searchbox").value;
+    const query = document
+        .getElementById("searchbox")
+        .value
+        .trim()
+        .toLowerCase();
 
+    if (!query) return;
+
+    // Search saved places first
+    fetch("http://localhost:3000/places")
+        .then(res => res.json())
+        .then(places => {
+            const found = places.find(place =>
+                place.name.toLowerCase().includes(query)
+            );
+
+            if (found) {
+                showSavedPlace(found);
+            } else {
+                searchOnline(query);
+            }
+        });
+}
+
+function searchOnline(query) {
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`)
         .then(res => res.json())
         .then(data => {
-            if (data.length === 0) {
-                alert("Location not found");
+            if (!data.length) {
+                alert("Location not found 😢");
                 return;
             }
 
             const place = data[0];
 
-            //  DYNAMIC ZOOM
-            const bbox = place.boundingbox;
+            setMarker(place.lat, place.lon);
+            map.setView([place.lat, place.lon], 14);
 
-            if (bbox) {
-                const bounds = [
-                    [parseFloat(bbox[0]), parseFloat(bbox[2])],
-                    [parseFloat(bbox[1]), parseFloat(bbox[3])]
-                ];
-                map.fitBounds(bounds);
-            } else {
-                map.setView([place.lat, place.lon], 12);
-            }
-
-            //  REMOVE OLD MARKER
-            if (marker) {
-                map.removeLayer(marker);
-            }
-
-            //  ADD MARKER (NO POPUP)
-            marker = L.marker([place.lat, place.lon]).addTo(map);
-
-            // UPDATE INPUT
-            const input = document.getElementById("locationInput");
-            if (input) {
-                input.value = place.display_name;
-            }
-
-            //  SHOW CARD
             showPlaceCard(place);
         });
 }
-let selecting = false;
 
-function enableMapSelection() {
-    selecting = true;
-    alert("Click on map to select location 📍");
-}
-// SHOW PLACE CARD
-function showPlaceCard(place) {
+// ===============================
+// PLACE DISPLAY
+// ===============================
+function showSavedPlace(place) {
+    setMarker(place.lat, place.lon);
+    map.setView([place.lat, place.lon], 16);
+
     document.getElementById("placeCard").classList.remove("hidden");
+    document.getElementById("placeTitle").innerText = place.name;
+    document.getElementById("placeType").innerText = "Saved Place";
+    document.getElementById("placeDesc").innerText = place.desc;
+    document.getElementById("placeAddress").innerText = place.address;
 
+    document.getElementById("placeImage").src =
+        place.image || "https://via.placeholder.com/400x200?text=No+Image";
+}
+
+function showPlaceCard(place) {
     const name = place.display_name.split(",")[0];
 
+    document.getElementById("placeCard").classList.remove("hidden");
     document.getElementById("placeTitle").innerText = name;
     document.getElementById("placeAddress").innerText = place.display_name;
-
-    // 🧠 DEFAULT
-    let label = "Place";
-
-    // 🔥 Use place.type (from search API)
-    const type = place.type || "";
-
-    if (type.includes("country")) {
-        label = "Country";
-    } else if (type.includes("city") || type.includes("town")) {
-        label = "City";
-    } else if (type.includes("village")) {
-        label = "Village";
-    } else if (type.includes("road")) {
-        label = "Street";
-    } else if (type.includes("university")) {
-        label = "University";
-    } else if (type.includes("hotel")) {
-        label = "Hotel";
-    }
-
-    // ✅ SET TYPE
-    document.getElementById("placeType").innerText = label;
-
-    // 📖 Default description first
+    document.getElementById("placeType").innerText = detectType(place.type);
     document.getElementById("placeDesc").innerText =
-        "Selected from map search. Explore or save this place.";
+        "Selected from map search.";
 
-    // 🖼 + 📖 REAL DATA
     fetchPlaceData(name);
 }
+
+function detectType(type = "") {
+    if (type.includes("country")) return "🌍 Country";
+    if (type.includes("city") || type.includes("town")) return "🏙 City";
+    if (type.includes("village")) return "🏡 Village";
+    if (type.includes("road")) return "🛣 Street";
+    if (type.includes("hotel")) return "🏨 Hotel";
+    if (type.includes("university")) return "🎓 University";
+
+    return "📍 Place";
+}
+
+// ===============================
+// WIKIPEDIA DATA
+// ===============================
 function fetchPlaceData(name) {
-
-    // 🔥 RESET image first (prevents old image bug)
-    document.getElementById("placeImage").src = "";
-
     fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`)
         .then(res => res.json())
         .then(data => {
-
-            const img = document.getElementById("placeImage");
-            const uploadSection = document.getElementById("uploadSection");
-
-            // 🖼 IMAGE
-            if (data.thumbnail && data.thumbnail.source) {
-                img.src = data.thumbnail.source;
-
-                // ❌ hide upload if image exists
-                uploadSection.style.display = "none";
-
-            } else {
-                showUploadOption();
-            }
-
-            // 📖 DESCRIPTION
-            const descElement = document.getElementById("placeDesc");
-
-            if (data.extract) {
-                descElement.innerText = data.extract;
-
-                document.getElementById("seeMoreLink").href =
-                    data.content_urls.desktop.page;
-            } else {
-                descElement.innerText = "No description available.";
-            }
-        })
-        .catch(() => {
-            showUploadOption();
+            document.getElementById("placeImage").src =
+                data.thumbnail?.source ||
+                "https://via.placeholder.com/400x200?text=No+Image";
 
             document.getElementById("placeDesc").innerText =
-                "No description available.";
+                data.extract || "No description available.";
+
+            if (data.content_urls?.desktop?.page) {
+                document.getElementById("seeMoreLink").href =
+                    data.content_urls.desktop.page;
+            }
         });
 }
-function showUploadOption() {
-    const img = document.getElementById("placeImage");
 
-    // placeholder image
-    img.src = "https://via.placeholder.com/400x200?text=No+Image";
+// ===============================
+// MAP HELPERS
+// ===============================
+function setMarker(lat, lon) {
+    if (marker) map.removeLayer(marker);
 
-    // show upload UI
-    document.getElementById("uploadSection").style.display = "block";
+    marker = L.marker([lat, lon]).addTo(map);
 }
-// ❌ CLOSE CARD
+
 function closeCard() {
     document.getElementById("placeCard").classList.add("hidden");
 }
 
-// ⌨️ ENTER KEY SEARCH
-document.getElementById("searchbox").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
-        searchLocation();
-    }
-});
-map.on('dblclick', function(e) {
-    const lat = e.latlng.lat;
-    const lon = e.latlng.lng;
+// ===============================
+// SELECT ON MAP
+// ===============================
+function enableMapSelection() {
+    selecting = true;
+    alert("Click map to select location 📍");
+}
 
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-        .then(res => res.json())
-        .then(data => {
-
-            const place = {
-                lat: lat,
-                lon: lon,
-                display_name: data.display_name || "Selected Location"
-            };
-
-            if (marker) {
-                map.removeLayer(marker);
-            }
-
-            marker = L.marker([lat, lon]).addTo(map);
-
-            showPlaceCard(place);
-        });
-});
-map.on('click', function(e) {
+// SINGLE CLICK = only for select mode
+map.on("click", function (e) {
 
     if (!selecting) return;
 
@@ -192,84 +155,184 @@ map.on('click', function(e) {
     const lat = e.latlng.lat;
     const lon = e.latlng.lng;
 
-    if (marker) {
-        map.removeLayer(marker);
-    }
+    setMarker(lat, lon);
 
-    marker = L.marker([lat, lon]).addTo(map);
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        .then(res => res.json())
+        .then(data => {
+            openAddPlaceForm(lat, lon, data.display_name);
+        });
+});
+
+
+// DOUBLE CLICK = show place/city info
+map.on("dblclick", function (e) {
+
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
+
+    setMarker(lat, lon);
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
         .then(res => res.json())
         .then(data => {
 
-            const address = data.display_name || "Selected location";
+            if (!data || !data.display_name) {
+                alert("Place not found 😢");
+                return;
+            }
 
-            openAddPlaceForm(lat, lon, address);
+            showPlaceCard(data);
         });
 });
-document.getElementById("imageUpload").addEventListener("change", function(e) {
-    const file = e.target.files[0];
 
-    if (file) {
-        const reader = new FileReader();
-
-        reader.onload = function(event) {
-            document.getElementById("placeImage").src = event.target.result;
-        };
-
-        reader.readAsDataURL(file);
-    }
-});
+// ===============================
+// MODAL
+// ===============================
 function openAddPlaceForm(lat, lon, address) {
+
+    // show modal
     document.getElementById("addPlace").classList.remove("hidden");
+
+    // reset fields
+    document.getElementById("placeName").value = "";
+    document.getElementById("placeDescInput").value = "";
     document.getElementById("placeAddressInput").value = address;
+
+    // reset image memory
+    uploadedImage = "";
+
+    // reset upload box UI
+    document.querySelector(".add-upload").innerHTML = `
+        <i class="fa-solid fa-camera"></i>
+        <p>Upload Place Photo</p>
+        <small>PNG, JPG up to 10MB</small>
+        <input type="file" id="placeImageInput" hidden>
+    `;
+
+    // store coords
     window.selectedLat = lat;
     window.selectedLon = lon;
+
+    // reconnect upload listener
+    bindUploadInput();
+}
+function bindUploadInput() {
+    document.getElementById("placeImageInput")
+        .addEventListener("change", function(e) {
+
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                uploadedImage = event.target.result;
+
+                document.querySelector(".add-upload").innerHTML =
+                    `<img src="${uploadedImage}" style="width:100%; border-radius:10px;">`;
+            };
+
+            reader.readAsDataURL(file);
+        });
 }
 
-// ❌ CLOSE MODAL
 function closeModal() {
     document.getElementById("addPlace").classList.add("hidden");
 }
 
-// 📸 TRIGGER UPLOAD (MODAL)
+// ===============================
+// IMAGE UPLOAD
+// ===============================
 function triggerUpload() {
     document.getElementById("placeImageInput").click();
 }
 
-// 🖼 PREVIEW IMAGE (MODAL)
-document.getElementById("placeImageInput").addEventListener("change", function(e) {
-    const file = e.target.files[0];
+document.getElementById("placeImageInput")
+    .addEventListener("change", function (e) {
 
-    if (file) {
+        const file = e.target.files[0];
+        if (!file) return;
+
         const reader = new FileReader();
 
-        reader.onload = function(event) {
-            document.querySelector(".upload-box").innerHTML =
-                `<img src="${event.target.result}" style="width:100%; border-radius:10px;">`;
+        reader.onload = function (event) {
+            uploadedImage = event.target.result;
+
+            document.querySelector(".add-upload").innerHTML =
+                `<img src="${uploadedImage}" style="width:100%; border-radius:10px;">`;
         };
 
         reader.readAsDataURL(file);
-    }
-});
+    });
 
-// 💾 SAVE PLACE
+// ===============================
+// SAVE PLACE
+// ===============================
 function savePlace() {
-    const name = document.getElementById("placeName").value;
-    const desc = document.getElementById("placeDescInput").value;
-    const address = document.getElementById("placeAddressInput").value;
-
     const place = {
-        name,
-        desc,
-        address,
+        name: document.getElementById("placeName").value,
+        desc: document.getElementById("placeDescInput").value,
+        address: document.getElementById("placeAddressInput").value,
         lat: window.selectedLat,
-        lon: window.selectedLon
+        lon: window.selectedLon,
+        image: uploadedImage
     };
 
-    console.log("Saved:", place);
+    fetch("http://localhost:3000/places", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(place)
+    })
+        .then(res => res.json())
+        .then(() => {
+            alert("Place saved 😏🔥");
+            closeModal();
+            function closeModal() {
+                document.getElementById("addPlace").classList.add("hidden");
 
-    alert("Place saved 😎");
-
-    closeModal();
+                uploadedImage = "";
+            }
+        });
 }
+
+// ===============================
+// LOAD SAVED PLACES
+// ===============================
+function loadPlaces() {
+
+    savedMarkers.forEach(m => map.removeLayer(m));
+    savedMarkers = [];
+
+    fetch("http://localhost:3000/places")
+        .then(res => res.json())
+        .then(data => {
+
+            data.forEach(place => {
+
+                const m = L.marker([place.lat, place.lon])
+                    .addTo(map)
+                    .bindPopup(`
+                        <b>${place.name}</b><br>
+                        ${place.desc}
+                    `);
+
+                savedMarkers.push(m);
+            });
+        });
+}
+
+// ===============================
+// EVENTS
+// ===============================
+document.getElementById("searchbox")
+    .addEventListener("keypress", function (e) {
+        if (e.key === "Enter") searchLocation();
+    });
+
+// ===============================
+// START
+// ===============================
+loadPlaces();
