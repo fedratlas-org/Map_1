@@ -1,0 +1,13 @@
+[33m6cd9264[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature-something-new[m[33m, [m[1;31morigin/feature-something-new[m[33m)[m create backend
+[33mc4ef171[m Force cache refresh
+[33m489dbe3[m Fix save and load API URLs
+[33mf0e81ab[m Use live backend URL
+[33ma72ffc5[m Fix backend package.json
+[33ma976f5b[m Add backend package.json
+[33m182bd0c[m Frontend ready for deploy
+[33m6661b91[m create backend
+[33m3916462[m make it responsive
+[33m947cda9[m Now anyone can edit any location in anywhere
+[33m2c8cf93[m Merge pull request #1 from fedratlas-org/feature-edit-place
+[33m544e692[m[33m ([m[1;31morigin/feature-edit-place[m[33m, [m[1;32mfeature-edit-place[m[33m)[m edit place feature added
+[33m1c4a329[m added map project

@@ -24,30 +24,26 @@ app.get("/", (req, res) => {
 
 // Get all places
 app.get("/places", async (req, res) => {
-    const places = await Place.find();
-    res.json(places);
+    try {
+        const places = await Place.find();
+        res.json(places);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to fetch places" });
+    }
 });
-
 
 // Save place
 app.post("/places", async (req, res) => {
     try {
         const place = new Place(req.body);
         await place.save();
-
-        console.log("Saved:", place);
-
-        res.json({
-            message: "Saved 😎",
-            place
-        });
-
+        res.json({ message: "Saved 😎" });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Save failed" });
+        console.error(error);
+        res.status(500).json({ error: "Failed to save place" });
     }
 });
-
 
 // Delete place
 app.delete("/places/:id", async (req, res) => {

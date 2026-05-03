@@ -1,0 +1,18 @@
+[33m272f0d7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature-something-new[m[33m)[m HEAD@{0}: commit (merge): merge fix
+[33m6cd9264[m HEAD@{1}: commit: create backend
+[33mc4ef171[m[33m ([m[1;31morigin/feature-something-new[m[33m)[m HEAD@{2}: commit: Force cache refresh
+[33m489dbe3[m HEAD@{3}: commit: Fix save and load API URLs
+[33mf0e81ab[m HEAD@{4}: commit: Use live backend URL
+[33ma72ffc5[m HEAD@{5}: commit: Fix backend package.json
+[33ma976f5b[m HEAD@{6}: commit: Add backend package.json
+[33m182bd0c[m HEAD@{7}: commit: Frontend ready for deploy
+[33m6661b91[m HEAD@{8}: commit: create backend
+[33m3916462[m HEAD@{9}: commit: make it responsive
+[33m947cda9[m HEAD@{10}: commit: Now anyone can edit any location in anywhere
+[33m2c8cf93[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{11}: checkout: moving from main to feature-something-new
+[33m2c8cf93[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{12}: pull: Fast-forward
+[33m1c4a329[m HEAD@{13}: checkout: moving from feature-edit-place to main
+[33m544e692[m[33m ([m[1;31morigin/feature-edit-place[m[33m, [m[1;32mfeature-edit-place[m[33m)[m HEAD@{14}: commit: edit place feature added
+[33m1c4a329[m HEAD@{15}: checkout: moving from main to feature-edit-place
+[33m1c4a329[m HEAD@{16}: checkout: moving from main to main
+[33m1c4a329[m HEAD@{17}: commit (initial): added map project
