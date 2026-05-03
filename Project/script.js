@@ -1,4 +1,6 @@
-// ===============================
+const API_URL = window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : "https://fedratlas-map.onrender.com";// ===============================
 // GLOBALS
 // ===============================
 let uploadedImage = "";
@@ -20,20 +22,14 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 // SEARCH
 // ===============================
 function searchLocation() {
-    const query = document
-        .getElementById("searchbox")
-        .value
-        .trim()
-        .toLowerCase();
-
+    const query = document.getElementById("searchbox").value.trim().toLowerCase();
     if (!query) return;
 
-    // Search saved places first
-    fetch("https://fedratlas-map.onrender.com/places")
+    fetch(`${API_URL}/places`)
         .then(res => res.json())
         .then(places => {
-            const found = places.find(place =>
-                place.name.toLowerCase().includes(query)
+            const found = places.find(p =>
+                p.name.toLowerCase().includes(query)
             );
 
             if (found) {
@@ -86,8 +82,7 @@ function showPlaceCard(place) {
     document.getElementById("placeTitle").innerText = name;
     document.getElementById("placeAddress").innerText = place.display_name;
     document.getElementById("placeType").innerText = detectType(place.type);
-    document.getElementById("placeDesc").innerText =
-        "Selected from map search.";
+    document.getElementById("placeDesc").innerText = "Selected from map search.";
 
     fetchPlaceData(name);
 }
@@ -99,7 +94,6 @@ function detectType(type = "") {
     if (type.includes("road")) return "🛣 Street";
     if (type.includes("hotel")) return "🏨 Hotel";
     if (type.includes("university")) return "🎓 University";
-
     return "📍 Place";
 }
 
@@ -129,7 +123,6 @@ function fetchPlaceData(name) {
 // ===============================
 function setMarker(lat, lon) {
     if (marker) map.removeLayer(marker);
-
     marker = L.marker([lat, lon]).addTo(map);
 }
 
@@ -142,12 +135,11 @@ function closeCard() {
 // ===============================
 function enableMapSelection() {
     selecting = true;
-    alert("Click map to select location 📍");
+    alert("Single click map to select location 📍");
 }
 
-// SINGLE CLICK = only for select mode
+// SINGLE CLICK → select mode
 map.on("click", function (e) {
-
     if (!selecting) return;
 
     selecting = false;
@@ -164,10 +156,8 @@ map.on("click", function (e) {
         });
 });
 
-
-// DOUBLE CLICK = show place/city info
+// DOUBLE CLICK → show place info
 map.on("dblclick", function (e) {
-
     const lat = e.latlng.lat;
     const lon = e.latlng.lng;
 
@@ -176,7 +166,6 @@ map.on("dblclick", function (e) {
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
         .then(res => res.json())
         .then(data => {
-
             if (!data || !data.display_name) {
                 alert("Place not found 😢");
                 return;
@@ -190,19 +179,14 @@ map.on("dblclick", function (e) {
 // MODAL
 // ===============================
 function openAddPlaceForm(lat, lon, address) {
-
-    // show modal
     document.getElementById("addPlace").classList.remove("hidden");
 
-    // reset fields
     document.getElementById("placeName").value = "";
     document.getElementById("placeDescInput").value = "";
     document.getElementById("placeAddressInput").value = address;
 
-    // reset image memory
     uploadedImage = "";
 
-    // reset upload box UI
     document.querySelector(".add-upload").innerHTML = `
         <i class="fa-solid fa-camera"></i>
         <p>Upload Place Photo</p>
@@ -210,13 +194,12 @@ function openAddPlaceForm(lat, lon, address) {
         <input type="file" id="placeImageInput" hidden>
     `;
 
-    // store coords
     window.selectedLat = lat;
     window.selectedLon = lon;
 
-    // reconnect upload listener
     bindUploadInput();
 }
+
 function bindUploadInput() {
     document.getElementById("placeImageInput")
         .addEventListener("change", function(e) {
@@ -239,37 +222,14 @@ function bindUploadInput() {
 
 function closeModal() {
     document.getElementById("addPlace").classList.add("hidden");
+    uploadedImage = "";
 }
-
-// ===============================
-// IMAGE UPLOAD
-// ===============================
-function triggerUpload() {
-    document.getElementById("placeImageInput").click();
-}
-
-document.getElementById("placeImageInput")
-    .addEventListener("change", function (e) {
-
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-
-        reader.onload = function (event) {
-            uploadedImage = event.target.result;
-
-            document.querySelector(".add-upload").innerHTML =
-                `<img src="${uploadedImage}" style="width:100%; border-radius:10px;">`;
-        };
-
-        reader.readAsDataURL(file);
-    });
 
 // ===============================
 // SAVE PLACE
 // ===============================
 function savePlace() {
+
     const place = {
         name: document.getElementById("placeName").value,
         desc: document.getElementById("placeDescInput").value,
@@ -279,7 +239,7 @@ function savePlace() {
         image: uploadedImage
     };
 
-    fetch("https://fedratlas-map.onrender.com/places", {
+    fetch(`${API_URL}/places`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -290,11 +250,7 @@ function savePlace() {
         .then(() => {
             alert("Place saved 😏🔥");
             closeModal();
-            function closeModal() {
-                document.getElementById("addPlace").classList.add("hidden");
-
-                uploadedImage = "";
-            }
+            loadPlaces();
         });
 }
 
@@ -306,7 +262,7 @@ function loadPlaces() {
     savedMarkers.forEach(m => map.removeLayer(m));
     savedMarkers = [];
 
-    fetch("https://fedratlas-map.onrender.com/places")
+    fetch(`${API_URL}/places`)
         .then(res => res.json())
         .then(data => {
 
